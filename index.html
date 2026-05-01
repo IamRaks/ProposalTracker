@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#1e3a5f"/>
+<title>ProposalTrack</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --brand:#1e3a5f;--brand2:#2563eb;--brand-light:#dbeafe;
+  --success:#16a34a;--warn:#d97706;--danger:#dc2626;
+  --bg:#f8fafc;--card:#fff;--border:#e2e8f0;
+  --text:#0f172a;--muted:#64748b;--faint:#f1f5f9;
+}
+html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);overscroll-behavior:none}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* Screens */
+.screen{display:none;flex-direction:column;min-height:100vh;flex:1}
+.screen.active{display:flex}
+
+/* Typography */
+h1{font-size:1.25rem;font-weight:700}
+h2{font-size:1rem;font-weight:700}
+h3{font-size:.875rem;font-weight:700}
+p{font-size:.875rem}
+
+/* Header */
+.topbar{background:var(--brand);color:#fff;padding:48px 20px 16px;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.2rem}
+.topbar p{font-size:.75rem;color:#93c5fd;margin-top:2px}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* Bottom Nav */
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;max-width:480px;margin:0 auto}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;color:var(--muted);font-size:10px;font-weight:500;cursor:pointer;border:none;background:none;transition:color .15s}
+.nav-btn svg{width:20px;height:20px;stroke-width:1.8}
+.nav-btn.active{color:var(--brand2)}
+.nav-btn.active svg{stroke-width:2.5}
+
+/* Cards */
+.card{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-link{cursor:pointer;transition:transform .1s}
+.card-link:active{transform:scale(.98)}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px 16px;border-radius:12px;font-size:.875rem;font-weight:600;border:none;cursor:pointer;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-secondary{background:var(--faint);color:var(--text)}
+.btn-sm{padding:9px 14px;font-size:.8rem;border-radius:10px;width:auto}
+
+/* Inputs */
+.input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:.875rem;outline:none;transition:border-color .15s;background:#fff;color:var(--text)}
+.input:focus{border-color:var(--brand2)}
+.input-wrap{margin-bottom:14px}
+.input-label{display:block;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-draft{background:#f1f5f9;color:#475569}
+.badge-pending{background:#fef3c7;color:#92400e}
+.badge-sanctioned{background:#dcfce7;color:#166534}
+.badge-rejected{background:#fee2e2;color:#991b1b}
+.badge-maker{background:#dbeafe;color:#1e40af}
+.badge-member{background:#f1f5f9;color:#475569}
+.badge-convenor{background:#dbeafe;color:#1e40af}
+.badge-chairman{background:#ede9fe;color:#6b21a8}
+.badge-approved{background:#dcfce7;color:#166534}
+.badge-sendback{background:#fef3c7;color:#92400e}
+.badge-active{background:#dcfce7;color:#166534}
+.badge-inactive{background:#f1f5f9;color:#64748b}
+.badge-admin{background:#ede9fe;color:#6b21a8}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{flex-shrink:0;padding:6px 14px;border-radius:99px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;transition:all .15s}
+.tab-btn.active{background:#fff;color:var(--brand)}
+.tab-btn:not(.active){background:rgba(255,255,255,.15);color:#bfdbfe}
+
+/* Toast */
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:12px;font-size:.8rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%}
+#toast.show{opacity:1}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
+.modal-sheet{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 48px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 20px}
+
+/* Timeline */
+.timeline-item{display:flex;gap:12px;padding-bottom:16px}
+.timeline-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.timeline-line{position:relative}
+.timeline-line::after{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--border)}
+.timeline-content{flex:1;padding-top:4px}
+.timeline-action{font-size:.875rem;font-weight:600;color:var(--text)}
+.timeline-meta{font-size:.75rem;color:var(--muted);margin-top:2px}
+.timeline-comment{font-size:.75rem;color:var(--muted);background:var(--faint);border-radius:8px;padding:8px 10px;margin-top:6px;font-style:italic}
+.timeline-time{font-size:.65rem;color:var(--muted);text-align:right;margin-top:2px;white-space:nowrap}
+
+/* Auth screens */
+.auth-top{background:var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px 40px;color:#fff}
+.auth-icon{width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.auth-bottom{background:var(--bg);border-radius:24px 24px 0 0;padding:28px 20px 40px;flex:1}
+
+/* Proposal list item */
+.proposal-item{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.proposal-ref{font-size:.9rem;font-weight:700;color:var(--text)}
+.proposal-subject{font-size:.75rem;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.proposal-date{font-size:.65rem;color:var(--muted);margin-top:6px}
+.proposal-holder{text-align:right;flex-shrink:0}
+.proposal-holder-name{font-size:.75rem;font-weight:600;color:#475569;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proposal-holder-desig{font-size:.65rem;color:var(--brand2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* QR display */
+#qr-display canvas,#qr-display img{border-radius:12px}
+.qr-wrap{display:flex;justify-content:center;margin:16px 0}
+
+/* Scanner */
+#qr-reader{width:100%;border-radius:16px;overflow:hidden}
+#qr-reader video{border-radius:16px}
+
+/* Committee member row */
+.member-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--faint)}
+.member-row:last-child{border-bottom:none}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
+
+/* Action buttons panel */
+.action-panel{background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:14px;margin-bottom:10px}
+
+/* Misc */
+.section-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;margin-top:4px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--brand2);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pb-nav{padding-bottom:80px}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-2{gap:8px}.gap-3{gap:12px}.flex-1{flex:1}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mb-3{margin-bottom:12px}.text-sm{font-size:.875rem}.text-xs{font-size:.75rem}.text-muted{color:var(--muted)}.font-bold{font-weight:700}.font-semibold{font-weight:600}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.w-full{width:100%}
+.px-5{padding-left:20px;padding-right:20px}.py-4{padding-top:16px;padding-bottom:16px}.p-4{padding:16px}
+.text-center{text-align:center}.text-right{text-align:right}
+.back-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.back-btn:active{background:rgba(255,255,255,.25)}
+.danger-text{color:var(--danger)}.success-text{color:var(--success)}
+.alert{padding:12px 14px;border-radius:12px;font-size:.8rem;margin-bottom:12px}
+.alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.alert-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════ -->
+<div id="screen-login" class="screen">
+  <div class="auth-top">
+    <div class="auth-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <h1 style="font-size:1.5rem;margin-bottom:4px">ProposalTrack</h1>
+    <p style="color:#93c5fd;font-size:.875rem">Office Proposal Management</p>
+  </div>
+  <div class="auth-bottom">
+    <h2 style="margin-bottom:20px;font-size:1.2rem">Sign In</h2>
+    <div id="login-error" class="alert alert-error" style="display:none"></div>
+    <div class="input-wrap">
+      <label class="input-label">Employee ID</label>
+      <input id="login-empid" class="input" placeholder="e.g. EMP001" autocomplete="username"/>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">Password</label>
+      <input id="login-pw" class="input" type="password" placeholder="Enter password" autocomplete="current-password"/>
+    </div>
+    <button class="btn btn-primary mt-4" onclick="doLogin()">Sign In</button>
+    <p class="text-center text-muted mt-3" style="font-size:.875rem">
+      New employee? <a href="#" onclick="showScreen('register')" style="color:var(--brand2);font-weight:600">Register here</a>
+    </p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     REGISTER SCREEN
+════════════════════════════════════ -->
+<div id="screen-register" class="screen">
+  <div class="auth-top">
+    <div class="auth-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <h1 style="font-size:1.5rem;margin-bottom:4px">ProposalTrack</h1>
+    <p style="color:#93c5fd">Create your account</p>
+  </div>
+  <div class="auth-bottom">
+    <div class="flex items-center gap-2 mb-3">
+      <button class="back-btn" style="background:var(--faint);color:var(--text)" onclick="showScreen('login')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h2 style="font-size:1.2rem">Register</h2>
+    </div>
+    <div id="reg-error" class="alert alert-error" style="display:none"></div>
+    <div class="input-wrap"><label class="input-label">Employee ID</label><input id="reg-empid" class="input" placeholder="e.g. EMP005"/></div>
+    <div class="input-wrap"><label class="input-label">Full Name</label><input id="reg-name" class="input" placeholder="Your full name"/></div>
+    <div class="input-wrap">
+      <label class="input-label">Designation</label>
+      <select id="reg-desig" class="input"><option value="">Select designation...</option></select>
+    </div>
+    <div class="input-wrap"><label class="input-label">Password</label><input id="reg-pw" class="input" type="password" placeholder="Min. 6 characters"/></div>
+    <button class="btn btn-primary mt-2" onclick="doRegister()">Create Account</button>
+    <p class="text-center text-muted mt-3" style="font-size:.875rem">
+      Already registered? <a href="#" onclick="showScreen('login')" style="color:var(--brand2);font-weight:600">Sign in</a>
+    </p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     DASHBOARD SCREEN
+════════════════════════════════════ -->
+<div id="screen-dashboard" class="screen">
+  <div class="topbar">
+    <div class="topbar-row mb-3">
+      <div>
+        <p style="color:#93c5fd;font-size:.7rem">Welcome back,</p>
+        <h1 id="dash-username">User</h1>
+      </div>
+      <span id="dash-desig" style="font-size:.7rem;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:10px;color:#bfdbfe"></span>
+    </div>
+    <div class="tabs" id="dash-tabs">
+      <button class="tab-btn active" onclick="setDashTab('All',this)">All</button>
+      <button class="tab-btn" onclick="setDashTab('Draft',this)">Draft</button>
+      <button class="tab-btn" onclick="setDashTab('Pending for Approval',this)">Pending</button>
+      <button class="tab-btn" onclick="setDashTab('Sanctioned',this)">Sanctioned</button>
+      <button class="tab-btn" onclick="setDashTab('Rejected',this)">Rejected</button>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav" id="dash-list"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     NEW PROPOSAL SCREEN
+════════════════════════════════════ -->
+<div id="screen-new-proposal" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="showScreen('dashboard')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h1 style="flex:1;padding-left:8px">New Proposal</h1>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav">
+    <div id="new-error" class="alert alert-error" style="display:none"></div>
+    <div class="card">
+      <h3 class="mb-3">Proposal Details</h3>
+      <div class="input-wrap"><label class="input-label">Reference Number</label><input id="new-refno" class="input" placeholder="e.g. REF/2024/001"/></div>
+      <div class="input-wrap"><label class="input-label">Subject</label><input id="new-subject" class="input" placeholder="Brief subject of the proposal"/></div>
+      <div class="input-wrap"><label class="input-label">Date of Proposal</label><input id="new-date" class="input" type="date"/></div>
+    </div>
+    <div class="card">
+      <div class="flex items-center justify-between mb-3">
+        <h3>Committee Members</h3>
+        <span id="committee-count" class="text-xs text-muted">0 added</span>
+      </div>
+      <div id="committee-list"></div>
+      <div class="grid-2 mt-3">
+        <button class="btn btn-secondary btn-sm" onclick="openUserPicker('Convenor')">+ Convenor</button>
+        <button class="btn btn-secondary btn-sm" onclick="openUserPicker('Member')">+ Member</button>
+        <button class="btn btn-secondary btn-sm" onclick="openUserPicker('Chairman')" style="grid-column:span 2">+ Chairman</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="createProposal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Create & Generate QR
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     PROPOSAL DETAIL SCREEN
+════════════════════════════════════ -->
+<div id="screen-proposal-detail" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="showScreen('dashboard')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div style="flex:1;padding-left:8px;min-width:0">
+        <h1 id="detail-refno" class="truncate"></h1>
+        <p id="detail-subject" style="font-size:.75rem;color:#93c5fd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p>
+      </div>
+      <span id="detail-badge"></span>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav" id="detail-body"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCAN SCREEN
+════════════════════════════════════ -->
+<div id="screen-scan" class="screen" style="background:#0f172a;color:#fff">
+  <div style="padding:48px 20px 16px;display:flex;align-items:center;justify-content:space-between">
+    <div class="flex items-center gap-2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <h1 style="color:#fff">Scan QR Code</h1>
+    </div>
+    <button onclick="stopScannerAndGo('dashboard')" style="background:rgba(255,255,255,.1);border:none;color:#fff;padding:8px;border-radius:12px;cursor:pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px" id="scan-inner">
+    <div id="scan-start-view" style="text-align:center">
+      <div style="width:96px;height:96px;background:rgba(255,255,255,.1);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      </div>
+      <h2 style="color:#fff;margin-bottom:8px">Scan Proposal QR</h2>
+      <p style="color:#94a3b8;font-size:.875rem;max-width:280px;margin:0 auto 28px">Point your camera at a proposal QR code to view details and take action.</p>
+      <div id="scan-error" style="background:rgba(220,38,38,.2);border:1px solid rgba(220,38,38,.4);color:#fca5a5;padding:12px;border-radius:12px;font-size:.8rem;margin-bottom:16px;display:none"></div>
+      <button onclick="startQRScanner()" style="background:#fff;color:#0f172a;border:none;padding:14px 32px;border-radius:16px;font-size:.9rem;font-weight:700;cursor:pointer">Open Camera</button>
+    </div>
+    <div id="scan-active-view" style="width:100%;display:none">
+      <div id="qr-reader" style="width:100%;max-width:320px;margin:0 auto"></div>
+      <p style="color:#94a3b8;font-size:.875rem;text-align:center;margin:16px 0">Hold steady — scanning
