@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#1e3a5f"/>
+<title>ProposalTrack</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --brand:#1e3a5f;--brand2:#2563eb;--brand-light:#dbeafe;
+  --success:#16a34a;--warn:#d97706;--danger:#dc2626;
+  --bg:#f8fafc;--card:#fff;--border:#e2e8f0;
+  --text:#0f172a;--muted:#64748b;--faint:#f1f5f9;
+}
+html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);overscroll-behavior:none}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* Screens */
+.screen{display:none;flex-direction:column;min-height:100vh;flex:1}
+.screen.active{display:flex}
+
+/* Typography */
+h1{font-size:1.25rem;font-weight:700}
+h2{font-size:1rem;font-weight:700}
+h3{font-size:.875rem;font-weight:700}
+p{font-size:.875rem}
+
+/* Header */
+.topbar{background:var(--brand);color:#fff;padding:48px 20px 16px;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.2rem}
+.topbar p{font-size:.75rem;color:#93c5fd;margin-top:2px}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* Bottom Nav */
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;max-width:480px;margin:0 auto}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;color:var(--muted);font-size:10px;font-weight:500;cursor:pointer;border:none;background:none;transition:color .15s}
+.nav-btn svg{width:20px;height:20px;stroke-width:1.8}
+.nav-btn.active{color:var(--brand2)}
+.nav-btn.active svg{stroke-width:2.5}
+
+/* Cards */
+.card{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-link{cursor:pointer;transition:transform .1s}
+.card-link:active{transform:scale(.98)}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px 16px;border-radius:12px;font-size:.875rem;font-weight:600;border:none;cursor:pointer;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-secondary{background:var(--faint);color:var(--text)}
+.btn-sm{padding:9px 14px;font-size:.8rem;border-radius:10px;width:auto}
+
+/* Inputs */
+.input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:.875rem;outline:none;transition:border-color .15s;background:#fff;color:var(--text)}
+.input:focus{border-color:var(--brand2)}
+.input-wrap{margin-bottom:14px}
+.input-label{display:block;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-draft{background:#f1f5f9;color:#475569}
+.badge-pending{background:#fef3c7;color:#92400e}
+.badge-sanctioned{background:#dcfce7;color:#166534}
+.badge-rejected{background:#fee2e2;color:#991b1b}
+.badge-maker{background:#dbeafe;color:#1e40af}
+.badge-member{background:#f1f5f9;color:#475569}
+.badge-convenor{background:#dbeafe;color:#1e40af}
+.badge-chairman{background:#ede9fe;color:#6b21a8}
+.badge-approved{background:#dcfce7;color:#166534}
+.badge-sendback{background:#fef3c7;color:#92400e}
+.badge-active{background:#dcfce7;color:#166534}
+.badge-inactive{background:#f1f5f9;color:#64748b}
+.badge-admin{background:#ede9fe;color:#6b21a8}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{flex-shrink:0;padding:6px 14px;border-radius:99px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;transition:all .15s}
+.tab-btn.active{background:#fff;color:var(--brand)}
+.tab-btn:not(.active){background:rgba(255,255,255,.15);color:#bfdbfe}
+
+/* Toast */
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:12px;font-size:.8rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%}
+#toast.show{opacity:1}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
+.modal-sheet{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 48px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 20px}
+
+/* Timeline */
+.timeline-item{display:flex;gap:12px;padding-bottom:16px}
+.timeline-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.timeline-line{position:relative}
+.timeline-line::after{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--border)}
+.timeline-content{flex:1;padding-top:4px}
+.timeline-action{font-size:.875rem;font-weight:600;color:var(--text)}
+.timeline-meta{font-size:.75rem;color:var(--muted);margin-top:2px}
+.timeline-comment{font-size:.75rem;color:var(--muted);background:var(--faint);border-radius:8px;padding:8px 10px;margin-top:6px;font-style:italic}
+.timeline-time{font-size:.65rem;color:var(--muted);text-align:right;margin-top:2px;white-space:nowrap}
+
+/* Auth screens */
+.auth-top{background:var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px 40px;color:#fff}
+.auth-icon{width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.auth-bottom{background:var(--bg);border-radius:24px 24px 0 0;padding:28px 20px 40px;flex:1}
+
+/* Proposal list item */
+.proposal-item{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.proposal-ref{font-size:.9rem;font-weight:700;color:var(--text)}
+.proposal-subject{font-size:.75rem;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.proposal-date{font-size:.65rem;color:var(--muted);margin-top:6px}
+.proposal-holder{text-align:right;flex-shrink:0}
+.proposal-holder-name{font-size:.75rem;font-weight:600;color:#475569;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proposal-holder-desig{font-size:.65rem;color:var(--brand2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* QR display */
+#qr-display canvas,#qr-display img{border-radius:12px}
+.qr-wrap{display:flex;justify-content:center;margin:16px 0}
+
+/* Scanner */
+#qr-reader{width:100%;border-radius:16px;overflow:hidden}
+#qr-reader video{border-radius:16px}
+
+/* Committee member row */
+.member-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--faint)}
+.member-row:last-child{border-bottom:none}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
+
+/* Action buttons panel */
+.action-panel{background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:14px;margin-bottom:10px}
+
+/* Misc */
+.section-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;margin-top:4px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--brand2);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pb-nav{padding-bottom:100px}
+@keyframes scanline{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-2{gap:8px}.gap-3{gap:12px}.flex-1{flex:1}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mb-3{margin-bottom:12px}.text-sm{font-size:.875rem}.text-xs{font-size:.75rem}.text-muted{color:var(--muted)}.font-bold{font-weight:700}.font-semibold{font-weight:600}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.w-full{width:100%}
+.px-5{padding-left:20px;padding-right:20px}.py-4{padding-top:16px;padding-bottom:16px}.p-4{padding:16px}
+.text-center{text-align:center}.text-right{text-align:right}
+.back-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.back-btn:active{background:rgba(255,255,255,.25)}
+.danger-text{color:var(--danger)}.success-text{color:var(--success)}
+.alert{padding:12px 14px;border-radius:12px;font-size:.8rem;margin-bottom:12px}
+.alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.alert-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════ -->
+<div id="screen-login" class="screen">
+  <div class="auth-top">
+    <div class="auth-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <h1 style="font-size:1.5rem;margin-bottom:4px">ProposalTrack</h1>
+    <p style="color:#93c5fd;font-size:.875rem">Office Proposal Management</p>
+  </div>
+  <div class="auth-bottom">
+    <h2 style="margin-bottom:20px;font-size:1.2rem">Sign In</h2>
+    <div id="login-error" class="alert alert-error" style="display:none"></div>
+    <div class="input-wrap">
+      <label class="input-label">Employee ID</label>
+      <input id="login-empid" class="input" placeholder="e.g. EMP001" autocomplete="username"/>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">Password</label>
+      <input id="login-pw" class="input" type="password" placeholder="Enter password" autocomplete="current-password"/>
+    </div>
+    <button class="btn btn-primary mt-4" onclick="doLogin()">Sign In</button>
+    <p class="text-center text-muted mt-3" style="font-size:.875rem">
+      New employee? <a href="#" onclick="showScreen('register')" style="color:var(--brand2);font-weight:600">Register here</a>
+    </p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     REGISTER SCREEN
+════════════════════════════════════ -->
+<div id="screen-register" class="screen">
+  <div class="auth-top">
+    <div class="auth-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <h1 style="font-size:1.5rem;margin-bottom:4px">ProposalTrack</h1>
+    <p style="color:#93c5fd">Create your account</p>
+  </div>
+  <div class="auth-bottom">
+    <div class="flex items-center gap-2 mb-3">
+      <button class="back-btn" style="background:var(--faint);color:var(--text)" onclick="showScreen('login')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h2 style="font-size:1.2rem">Register</h2>
+    </div>
+    <div id="reg-error" class="alert alert-error" style="display:none"></div>
+    <div class="input-wrap"><label class="input-label">Employee ID</label><input id="reg-empid" class="input" placeholder="e.g. EMP005"/></div>
+    <div class="input-wrap"><label class="input-label">Full Name</label><input id="reg-name" class="input" placeholder="Your full name"/></div>
+    <div class="input-wrap">
+      <label class="input-label">Designation</label>
+      <select id="reg-desig" class="input"><option value="">Select designation...</option></select>
+    </div>
+    <div class="input-wrap"><label class="input-label">Password</label><input id="reg-pw" class="input" type="password" placeholder="Min. 6 characters"/></div>
+    <button class="btn btn-primary mt-2" onclick="doRegister()">Create Account</button>
+    <p class="text-center text-muted mt-3" style="font-size:.875rem">
+      Already registered? <a href="#" onclick="showScreen('login')" style="color:var(--brand2);font-weight:600">Sign in</a>
+    </p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     DASHBOARD SCREEN
+════════════════════════════════════ -->
+<div id="screen-dashboard" class="screen">
+  <div class="topbar">
+    <div class="topbar-row mb-3">
+      <div>
+        <p style="color:#93c5fd;font-size:.7rem">Welcome back,</p>
+        <h1 id="dash-username">User</h1>
+      </div>
+      <span id="dash-desig" style="font-size:.7rem;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:10px;color:#bfdbfe"></span>
+    </div>
+    <div class="tabs" id="dash-tabs">
+      <button class="tab-btn active" onclick="setDashTab('All',this)">All</button>
+      <button class="tab-btn" onclick="setDashTab('Draft',this)">Draft</button>
+      <button class="tab-btn" onclick="setDashTab('Pending for Approval',this)">Pending</button>
+      <button class="tab-btn" onclick="setDashTab('Sanctioned',this)">Sanctioned</button>
+      <button class="tab-btn" onclick="setDashTab('Rejected',this)">Rejected</button>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav" id="dash-list"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     NEW PROPOSAL SCREEN
+════════════════════════════════════ -->
+<div id="screen-new-proposal" class="screen" style="position:relative">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="showScreen('dashboard')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h1 style="flex:1;padding-left:8px">New Proposal</h1>
+    </div>
+  </div>
+  <!-- Scrollable content — padded enough to clear fixed footer button + bottom nav -->
+  <div class="px-5 py-4" style="padding-bottom:160px;overflow-y:auto;flex:1">
+    <div id="new-error" class="alert alert-error" style="display:none"></div>
+    <div class="card">
+      <h3 class="mb-3">Proposal Details</h3>
+      <div class="input-wrap"><label class="input-label">Reference Number</label><input id="new-refno" class="input" placeholder="e.g. REF/2024/001"/></div>
+      <div class="input-wrap"><label class="input-label">Subject</label><input id="new-subject" class="input" placeholder="Brief subject of the proposal"/></div>
+      <div class="input-wrap"><label class="input-label">Date of Proposal</label><input id="new-date" class="input" type="date"/></div>
+    </div>
+    <div class="card">
+      <div class="flex items-center justify-between mb-3">
+        <h3>Committee Members</h3>
+        <span id="committee-count" class="text-xs text-muted">0 added</span>
+      </div>
+      <div id="committee-list"></div>
+      <div class="grid-2 mt-3">
+        <button class="btn btn-secondary btn-sm" onclick="openUserPicker('Convenor')">+ Convenor</button>
+        <button class="btn btn-secondary btn-sm" onclick="openUserPicker('Member')">+ Member</button>
+        <button class="btn btn-secondary btn-sm" onclick="openUserPicker('Chairman')" style="grid-column:span 2">+ Chairman</button>
+      </div>
+    </div>
+  </div>
+  <!-- Fixed Create button pinned above bottom nav — always visible -->
+  <div style="position:fixed;bottom:60px;left:0;right:0;max-width:480px;margin:0 auto;padding:10px 20px 12px;background:linear-gradient(to top, var(--bg) 75%, transparent);z-index:90">
+    <button class="btn btn-primary" onclick="createProposal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Create & Generate QR
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     PROPOSAL DETAIL SCREEN
+════════════════════════════════════ -->
+<div id="screen-proposal-detail" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="showScreen('dashboard')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div style="flex:1;padding-left:8px;min-width:0">
+        <h1 id="detail-refno" class="truncate"></h1>
+        <p id="detail-subject" style="font-size:.75rem;color:#93c5fd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p>
+      </div>
+      <span id="detail-badge"></span>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav" id="detail-body"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCAN SCREEN
+════════════════════════════════════ -->
+<div id="screen-scan" class="screen" style="background:#0f172a;color:#fff">
+  <div style="padding:48px 20px 16px;display:flex;align-items:center;justify-content:space-between">
+    <div class="flex items-center gap-2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <h1 style="color:#fff">Scan QR Code</h1>
+    </div>
+    <button onclick="stopScannerAndGo('dashboard')" style="background:rgba(255,255,255,.1);border:none;color:#fff;padding:8px;border-radius:12px;cursor:pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;width:100%" id="scan-inner">
+
+    <!-- Start view -->
+    <div id="scan-start-view" style="text-align:center;width:100%">
+      <div style="width:96px;height:96px;background:rgba(255,255,255,.1);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      </div>
+      <h2 style="color:#fff;margin-bottom:8px">Scan Proposal QR</h2>
+      <p style="color:#94a3b8;font-size:.875rem;max-width:280px;margin:0 auto 24px">Point your camera at a proposal QR code to view details and take action.</p>
+      <div id="scan-error" style="background:rgba(220,38,38,.2);border:1px solid rgba(220,38,38,.4);color:#fca5a5;padding:12px;border-radius:12px;font-size:.8rem;margin-bottom:16px;display:none;text-align:left"></div>
+      <button onclick="startQRScanner()" style="background:#fff;color:#0f172a;border:none;padding:14px 32px;border-radius:16px;font-size:.9rem;font-weight:700;cursor:pointer;width:100%;max-width:280px">
+        Open Camera
+      </button>
+      <!-- Manual entry fallback -->
+      <div style="margin-top:24px;width:100%;max-width:280px;margin-left:auto;margin-right:auto">
+        <p style="color:#64748b;font-size:.75rem;margin-bottom:8px">Or enter Proposal ID manually:</p>
+        <div style="display:flex;gap:8px">
+          <input id="manual-scan-id" type="number" placeholder="e.g. 1" style="flex:1;padding:11px 14px;border-radius:12px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:.875rem;outline:none"/>
+          <button onclick="manualScan()" style="background:var(--brand2);color:#fff;border:none;padding:11px 18px;border-radius:12px;font-weight:600;font-size:.875rem;cursor:pointer">Go</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active camera view -->
+    <div id="scan-active-view" style="width:100%;max-width:360px;display:none">
+      <div style="position:relative;border-radius:20px;overflow:hidden;background:#000;aspect-ratio:1">
+        <video id="scan-video" style="width:100%;height:100%;object-fit:cover" playsinline muted autoplay></video>
+        <canvas id="scan-canvas" style="display:none"></canvas>
+        <!-- Corner frame overlay -->
+        <div style="position:absolute;inset:0;pointer-events:none">
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:65%;height:65%">
+            <div style="position:absolute;top:0;left:0;width:28px;height:28px;border-top:3px solid #fff;border-left:3px solid #fff;border-radius:4px 0 0 0"></div>
+            <div style="position:absolute;top:0;right:0;width:28px;height:28px;border-top:3px solid #fff;border-right:3px solid #fff;border-radius:0 4px 0 0"></div>
+            <div style="position:absolute;bottom:0;left:0;width:28px;height:28px;border-bottom:3px solid #fff;border-left:3px solid #fff;border-radius:0 0 0 4px"></div>
+            <div style="position:absolute;bottom:0;right:0;width:28px;height:28px;border-bottom:3px solid #fff;border-right:3px solid #fff;border-radius:0 0 4px 0"></div>
+            <!-- Scan line animation -->
+            <div id="scan-line" style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,#3b82f6,transparent);animation:scanline 2s linear infinite"></div>
+          </div>
+        </div>
+        <div id="scan-status" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#fff;font-size:.75rem;font-weight:500">Scanning...</div>
+      </div>
+      <p style="color:#94a3b8;font-size:.8rem;text-align:center;margin:12px 0">Hold the QR code inside the frame</p>
+      <button onclick="stopScanner()" style="background:rgba(255,255,255,.1);color:#fff;border:none;width:100%;padding:13px;border-radius:14px;font-size:.875rem;font-weight:600;cursor:pointer">Cancel</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCAN ACTION SCREEN (after scan)
+════════════════════════════════════ -->
+<div id="screen-scan-action" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="showScreen('dashboard')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div style="flex:1;padding-left:8px">
+        <div class="flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <p style="font-size:.7rem;color:#93c5fd">QR Scanned</p>
+        </div>
+        <h1 id="scan-action-refno"></h1>
+      </div>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav" id="scan-action-body"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     SETTINGS SCREEN
+════════════════════════════════════ -->
+<div id="screen-settings" class="screen">
+  <div class="topbar">
+    <h1>Settings</h1>
+    <div style="background:rgba(255,255,255,.1);border-radius:16px;padding:14px;margin-top:14px;display:flex;align-items:center;gap:14px">
+      <div id="settings-avatar" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700"></div>
+      <div><p id="settings-name" style="font-weight:700"></p><p id="settings-empid" style="font-size:.75rem;color:#93c5fd"></p><p id="settings-desig" style="font-size:.7rem;color:#7dd3fc;margin-top:2px"></p></div>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav">
+    <div id="settings-admin-link" style="display:none">
+      <div class="card card-link flex items-center gap-3" onclick="showScreen('admin')" style="border-left:3px solid var(--brand2)">
+        <div style="width:36px;height:36px;background:#ede9fe;border-radius:12px;display:flex;align-items:center;justify-content:center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="flex-1"><p class="font-semibold text-sm">Admin Panel</p><p class="text-xs text-muted">Manage users and designations</p></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-label">Account Info</p>
+      <div id="settings-info"></div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="doLogout()">
+      <div class="flex items-center gap-3">
+        <div style="width:36px;height:36px;background:#fee2e2;border-radius:12px;display:flex;align-items:center;justify-content:center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </div>
+        <span style="font-weight:600;color:var(--danger);font-size:.875rem">Sign Out</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     ADMIN SCREEN
+════════════════════════════════════ -->
+<div id="screen-admin" class="screen">
+  <div class="topbar">
+    <div class="topbar-row mb-3">
+      <button class="back-btn" onclick="showScreen('settings')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="flex items-center gap-2" style="flex:1;padding-left:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <h1>Admin Panel</h1>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="setAdminTab('users',this)">Users</button>
+      <button class="tab-btn" onclick="setAdminTab('designations',this)">Designations</button>
+    </div>
+  </div>
+  <div class="px-5 py-4 pb-nav" id="admin-body"></div>
+</div>
+
+
+<!-- Install Banner -->
+<div id="install-banner" style="display:none;position:fixed;top:0;left:0;right:0;background:var(--brand);color:#fff;padding:10px 16px;z-index:200;align-items:center;justify-content:space-between;gap:10px;max-width:480px;margin:0 auto">
+  <div>
+    <p style="font-size:.8rem;font-weight:600">Install ProposalTrack</p>
+    <p style="font-size:.7rem;color:#bfdbfe">Add to Home Screen for best experience</p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="document.getElementById('install-banner').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 12px;border-radius:8px;font-size:.75rem;cursor:pointer">Later</button>
+    <button onclick="installApp()" style="background:#fff;color:var(--brand);border:none;padding:6px 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer">Install</button>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav id="bottom-nav" style="display:none">
+  <button class="nav-btn active" id="nav-dashboard" onclick="showScreen('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" id="nav-new-proposal" onclick="showScreen('new-proposal')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    New
+  </button>
+  <button class="nav-btn" id="nav-scan" onclick="showScanScreen()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Scan
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="showScreen('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<!-- User Picker Modal -->
+<div id="user-picker-modal" style="display:none" class="modal-overlay" onclick="closeUserPicker(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="flex items-center justify-between mb-3">
+      <div><h3 id="picker-title">Add Member</h3><p class="text-xs text-muted mt-1">Select a committee member</p></div>
+      <button onclick="closeUserPicker()" style="background:var(--faint);border:none;padding:8px;border-radius:10px;cursor:pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <input id="user-search" class="input mb-3" placeholder="Search by name, ID or designation..."/>
+    <div id="user-picker-list" style="max-height:50vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA LAYER — localStorage persistence
+// ══════════════════════════════════════════════════════════════
+
+const DB = {
+  get: (k) => JSON.parse(localStorage.getItem('pt_' + k) || 'null'),
+  set: (k, v) => localStorage.setItem('pt_' + k, JSON.stringify(v)),
+  getArr: (k) => JSON.parse(localStorage.getItem('pt_' + k) || '[]'),
+};
+
+// Seed initial data
+function seedDB() {
+  if (DB.get('seeded')) return;
+
+  DB.set('designations', [
+    {id:1,title:'Chief Manager-Credit'},
+    {id:2,title:'Chief Manager-Operations'},
+    {id:3,title:'AGM-Credit'},
+    {id:4,title:'AGM-Operations'},
+    {id:5,title:'AGM-Finance'},
+    {id:6,title:'DGM-Credit'},
+    {id:7,title:'DGM-Operations'},
+    {id:8,title:'Zonal Head'},
+    {id:9,title:'General Manager'},
+    {id:10,title:'Executive Director'},
+  ]);
+
+  // Hash simulation — in production use bcrypt. For demo: store as "hashed_<pw>"
+  DB.set('users', [
+    {id:1,empId:'ADMIN001',name:'System Admin',password:'hashed_admin123',designationId:9,isActive:true,isAdmin:true},
+    {id:2,empId:'EMP001',name:'Rajesh Kumar',password:'hashed_demo123',designationId:1,isActive:true,isAdmin:false},
+    {id:3,empId:'EMP002',name:'Priya Sharma',password:'hashed_demo123',designationId:4,isActive:true,isAdmin:false},
+    {id:4,empId:'EMP003',name:'Anil Verma',password:'hashed_demo123',designationId:6,isActive:true,isAdmin:false},
+    {id:5,empId:'EMP004',name:'Sunita Patel',password:'hashed_demo123',designationId:8,isActive:true,isAdmin:false},
+  ]);
+
+  DB.set('proposals', []);
+  DB.set('committee_members', []);
+  DB.set('audit_logs', []);
+  DB.set('next_ids', {user:6, proposal:1, cm:1, log:1, desig:11});
+  DB.set('seeded', true);
+}
+
+function nextId(type) {
+  const ids = DB.get('next_ids') || {};
+  const id = (ids[type] || 1);
+  ids[type] = id + 1;
+  DB.set('next_ids', ids);
+  return id;
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════
+
+let currentUser = null;
+
+function hashPassword(pw) { return 'hashed_' + pw; }
+
+function doLogin() {
+  const empId = document.getElementById('login-empid').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!empId || !pw) { showAlert(errEl, 'Please fill in all fields'); return; }
+
+  const users = DB.getArr('users');
+  const user = users.find(u => u.empId === empId && u.isActive);
+
+  if (!user || user.password !== hashPassword(pw)) {
+    showAlert(errEl, 'Invalid Employee ID or password');
+    return;
+  }
+
+  currentUser = user;
+  DB.set('session', user.id);
+  document.getElementById('login-empid').value = '';
+  document.getElementById('login-pw').value = '';
+  enterApp();
+}
+
+function doRegister() {
+  const empId = document.getElementById('reg-empid').value.trim();
+  const name = document.getElementById('reg-name').value.trim();
+  const designationId = parseInt(document.getElementById('reg-desig').value);
+  const pw = document.getElementById('reg-pw').value;
+  const errEl = document.getElementById('reg-error');
+  errEl.style.display = 'none';
+
+  if (!empId || !name || !designationId || !pw) { showAlert(errEl, 'Please fill in all fields'); return; }
+  if (pw.length < 6) { showAlert(errEl, 'Password must be at least 6 characters'); return; }
+
+  const users = DB.getArr('users');
+  if (users.find(u => u.empId === empId)) { showAlert(errEl, 'Employee ID already registered'); return; }
+
+  const newUser = {id: nextId('user'), empId, name, password: hashPassword(pw), designationId, isActive: true, isAdmin: false};
+  users.push(newUser);
+  DB.set('users', users);
+
+  toast('Account created! Please sign in.');
+  showScreen('login');
+}
+
+function doLogout() {
+  currentUser = null;
+  DB.set('session', null);
+  showScreen('login');
+  document.getElementById('bottom-nav').style.display = 'none';
+}
+
+function restoreSession() {
+  const uid = DB.get('session');
+  if (!uid) return false;
+  const users = DB.getArr('users');
+  const user = users.find(u => u.id === uid && u.isActive);
+  if (!user) return false;
+  currentUser = user;
+  return true;
+}
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+
+  // Nav highlight
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const navBtn = document.getElementById('nav-' + name);
+  if (navBtn) navBtn.classList.add('active');
+
+  // Screen init
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'settings') renderSettings();
+  if (name === 'admin') renderAdmin('users');
+  if (name === 'new-proposal') initNewProposal();
+}
+
+function enterApp() {
+  document.getElementById('bottom-nav').style.display = 'flex';
+  showScreen('dashboard');
+}
+
+function showScanScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-scan').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-scan').classList.add('active');
+  // Reset scan UI
+  document.getElementById('scan-start-view').style.display = 'block';
+  document.getElementById('scan-active-view').style.display = 'none';
+  document.getElementById('scan-error').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+
+function toast(msg, dur=2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function showAlert(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function getDesignation(id) {
+  const desigs = DB.getArr('designations');
+  return desigs.find(d => d.id === id) || {title: 'Unknown'};
+}
+
+function getUserById(id) {
+  return DB.getArr('users').find(u => u.id === id);
+}
+
+function statusBadgeClass(status) {
+  const map = {
+    'Draft': 'badge-draft',
+    'Pending for Approval': 'badge-pending',
+    'Sanctioned': 'badge-sanctioned',
+    'Rejected': 'badge-rejected',
+  };
+  return map[status] || 'badge-draft';
+}
+
+function roleBadgeClass(role) {
+  const map = {Convenor:'badge-convenor', Member:'badge-member', Chairman:'badge-chairman', Maker:'badge-maker'};
+  return map[role] || 'badge-member';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'2-digit'}) + ', ' +
+         d.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+}
+
+function avatarColor(name) {
+  const colors = ['#dbeafe','#fce7f3','#dcfce7','#fef9c3','#ede9fe','#ffedd5'];
+  const tcolors = ['#1e40af','#9d174d','#166534','#713f12','#5b21b6','#9a3412'];
+  const i = (name.charCodeAt(0) || 0) % colors.length;
+  return {bg: colors[i], fg: tcolors[i]};
+}
+
+function avatarEl(name, size=32) {
+  const {bg,fg} = avatarColor(name);
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:${bg};color:${fg}">${name[0]}</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// DESIGNATION DROPDOWN FILL
+// ══════════════════════════════════════════════════════════════
+
+function fillDesignationDropdowns() {
+  const desigs = DB.getArr('designations');
+  const selects = document.querySelectorAll('#reg-desig');
+  selects.forEach(sel => {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Select designation...</option>';
+    desigs.sort((a,b)=>a.title.localeCompare(b.title)).forEach(d => {
+      sel.innerHTML += `<option value="${d.id}"${d.id==cur?' selected':''}>${d.title}</option>`;
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════
+
+let dashTab = 'All';
+
+function setDashTab(tab, btn) {
+  dashTab = tab;
+  document.querySelectorAll('#dash-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const dash = document.getElementById('dash-list');
+  if (!currentUser) return;
+
+  document.getElementById('dash-username').textContent = currentUser.name;
+  document.getElementById('dash-desig').textContent = getDesignation(currentUser.designationId).title;
+
+  const proposals = DB.getArr('proposals');
+  const cms = DB.getArr('committee_members');
+
+  // My proposals: maker OR committee member
+  let mine = proposals.filter(p => {
+    if (p.makerId === currentUser.id) return true;
+    return cms.some(cm => cm.proposalId === p.id && cm.userId === currentUser.id);
+  });
+
+  if (dashTab !== 'All') mine = mine.filter(p => p.currentStatus === dashTab);
+  mine.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  if (mine.length === 0) {
+    dash.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><p class="font-bold text-sm">No proposals found</p><p class="text-xs text-muted mt-2">${dashTab==='All'?'Create your first proposal to get started.':'No '+dashTab+' proposals.'}</p></div>`;
+    return;
+  }
+
+  dash.innerHTML = `<p style="font-size:.7rem;color:var(--muted);margin-bottom:10px">${mine.length} proposal${mine.length!==1?'s':''}</p>` +
+    mine.map(p => {
+      const holder = p.currentWithId ? getUserById(p.currentWithId) : null;
+      const holderDesig = holder ? getDesignation(holder.designationId).title : '';
+      return `<div class="card card-link" onclick="openProposalDetail(${p.id})">
+        <div class="proposal-item">
+          <div style="flex:1;min-width:0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="proposal-ref">${p.refNo}</span>
+              <span class="badge ${statusBadgeClass(p.currentStatus)}">${p.currentStatus==='Pending for Approval'?'Pending':p.currentStatus}</span>
+            </div>
+            <p class="proposal-subject">${p.subject}</p>
+            <p class="proposal-date">${fmtDate(p.updatedAt)}</p>
+          </div>
+          ${holder ? `<div class="proposal-holder">
+            <p style="font-size:.6rem;color:var(--muted)">With</p>
+            <p class="proposal-holder-name">${holder.name}</p>
+            <p class="proposal-holder-desig">${holderDesig}</p>
+          </div>` : `<div class="proposal-holder"><p style="font-size:.65rem;color:var(--muted)">No holder</p></div>`}
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// NEW PROPOSAL
+// ══════════════════════════════════════════════════════════════
+
+let committeeSelection = [];
+let pickerRole = 'Member';
+
+function initNewProposal() {
+  committeeSelection = [];
+  document.getElementById('new-refno').value = '';
+  document.getElementById('new-subject').value = '';
+  document.getElementById('new-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('new-error').style.display = 'none';
+  renderCommitteeList();
+}
+
+function renderCommitteeList() {
+  const list = document.getElementById('committee-list');
+  const count = document.getElementById('committee-count');
+  count.textContent = committeeSelection.length + ' added';
+  if (committeeSelection.length === 0) {
+    list.innerHTML = '<p class="text-xs text-muted text-center" style="padding:12px 0">No members added yet</p>';
+    return;
+  }
+  list.innerHTML = committeeSelection.map(c => {
+    const desig = getDesignation(c.user.designationId).title;
+    const {bg,fg} = avatarColor(c.user.name);
+    return `<div class="flex items-center gap-2 member-row">
+      <div class="avatar" style="width:32px;height:32px;background:${bg};color:${fg}">${c.user.name[0]}</div>
+      <div class="flex-1">
+        <p class="text-sm font-semibold">${c.user.name}</p>
+        <p class="text-xs text-muted">${desig} · ${c.user.empId}</p>
+      </div>
+      <span class="badge ${roleBadgeClass(c.role)}">${c.role}</span>
+      <button onclick="removeFromCommittee(${c.user.id})" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px" title="Remove">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function removeFromCommittee(userId) {
+  committeeSelection = committeeSelection.filter(c => c.user.id !== userId);
+  renderCommitteeList();
+}
+
+function openUserPicker(role) {
+  pickerRole = role;
+  document.getElementById('picker-title').textContent = 'Add ' + role;
+  document.getElementById('user-search').value = '';
+  renderUserPickerList('');
+  document.getElementById('user-picker-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('user-search').focus(), 100);
+}
+
+function closeUserPicker(e) {
+  if (!e || e.target === document.getElementById('user-picker-modal')) {
+    document.getElementById('user-picker-modal').style.display = 'none';
+  }
+}
+
+document.getElementById('user-search').addEventListener('input', function() {
+  renderUserPickerList(this.value);
+});
+
+function renderUserPickerList(search) {
+  const users = DB.getArr('users').filter(u => {
+    if (!u.isActive) return false;
+    if (u.isAdmin) return false;
+    if (committeeSelection.some(c => c.user.id === u.id)) return false;
+    const q = search.toLowerCase();
+    if (!q) return true;
+    return u.name.toLowerCase().includes(q) || u.empId.toLowerCase().includes(q) ||
+           getDesignation(u.designationId).title.toLowerCase().includes(q);
+  });
+
+  const list = document.getElementById('user-picker-list');
+  if (users.length === 0) {
+    list.innerHTML = '<p class="text-center text-muted text-sm" style="padding:24px">No users found</p>';
+    return;
+  }
+
+  list.innerHTML = users.map(u => {
+    const desig = getDesignation(u.designationId).title;
+    const {bg,fg} = avatarColor(u.name);
+    return `<div onclick="addToCommittee(${u.id})" style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--faint);cursor:pointer">
+      <div class="avatar" style="width:36px;height:36px;background:${bg};color:${fg}">${u.name[0]}</div>
+      <div class="flex-1">
+        <p class="text-sm font-semibold">${u.name}</p>
+        <p class="text-xs text-muted">${desig} · ${u.empId}</p>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand2)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    </div>`;
+  }).join('');
+}
+
+function addToCommittee(userId) {
+  const user = getUserById(userId);
+  if (!user) return;
+  committeeSelection.push({user, role: pickerRole});
+  document.getElementById('user-picker-modal').style.display = 'none';
+  renderCommitteeList();
+}
+
+function createProposal() {
+  const refNo = document.getElementById('new-refno').value.trim();
+  const subject = document.getElementById('new-subject').value.trim();
+  const date = document.getElementById('new-date').value;
+  const errEl = document.getElementById('new-error');
+  errEl.style.display = 'none';
+
+  if (!refNo || !subject || !date) { showAlert(errEl, 'Please fill in all required fields'); return; }
+  if (committeeSelection.length === 0) { showAlert(errEl, 'Please add at least one committee member'); return; }
+
+  const proposals = DB.getArr('proposals');
+  if (proposals.find(p => p.refNo === refNo)) { showAlert(errEl, 'Reference number already exists'); return; }
+
+  const id = nextId('proposal');
+  const now = new Date().toISOString();
+
+  const proposal = {
+    id, refNo, subject,
+    dateOfProposal: date,
+    makerId: currentUser.id,
+    currentStatus: 'Draft',
+    currentWithId: null,
+    qrData: `PROPOSALTRACK:${id}`, // scanned by built-in scanner
+    createdAt: now, updatedAt: now,
+  };
+  proposals.push(proposal);
+  DB.set('proposals', proposals);
+
+  // Committee members
+  const cms = DB.getArr('committee_members');
+  committeeSelection.forEach(c => {
+    cms.push({id: nextId('cm'), proposalId: id, userId: c.user.id, committeeRole: c.role, hasActed: false, action: null, actedAt: null});
+  });
+  DB.set('committee_members', cms);
+
+  // Audit log
+  addAuditLog(id, currentUser.id, 'Created', `Proposal created with ref: ${refNo}`);
+
+  toast('✅ Proposal created!');
+  openProposalDetail(id);
+}
+
+// ══════════════════════════════════════════════════════════════
+// QR CODE GENERATION
+// ══════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════
+// Pure JS QR Code Generator — no external library
+// Compact implementation covering all alphanumeric/byte data
+// ════════════════════════════════════════════════════
+const qrCache = {};
+
+// Reed-Solomon GF(256) with primitive polynomial x^8+x^4+x^3+x^2+1
+const GF_EXP = new Uint8Array(512);
+const GF_LOG = new Uint8Array(256);
+(function(){
+  let x=1;
+  for(let i=0;i<255;i++){
+    GF_EXP[i]=x; GF_LOG[x]=i;
+    x<<=1; if(x&256)x^=285; x&=255;
+  }
+  for(let i=255;i<512;i++) GF_EXP[i]=GF_EXP[i-255];
+})();
+function gfMul(a,b){return(a&&b)?GF_EXP[GF_LOG[a]+GF_LOG[b]]:0;}
+function gfPoly(gen,n){
+  let p=[1];
+  for(let i=0;i<n;i++){
+    const t=[1,GF_EXP[i]];
+    const r=new Uint8Array(p.length+1);
+    for(let j=0;j<p.length;j++){r[j]^=gfMul(p[j],t[0]);r[j+1]^=gfMul(p[j],t[1]);}
+    p=Array.from(r);
+  }
+  return p;
+}
+function gfPolyDiv(msg,gen){
+  let r=[...msg,...new Uint8Array(gen.length-1)];
+  for(let i=0;i<msg.length;i++){
+    const c=r[i];
+    if(c)for(let j=1;j<gen.length;j++)r[i+j]^=gfMul(gen[j],c);
+  }
+  return r.slice(msg.length);
+}
+
+function makeQR(text) {
+  // Encode as byte mode (UTF-8)
+  const bytes=[];
+  for(let i=0;i<text.length;i++){
+    const c=text.charCodeAt(i);
+    if(c<128)bytes.push(c);
+    else if(c<2048){bytes.push(0xC0|(c>>6));bytes.push(0x80|(c&63));}
+    else{bytes.push(0xE0|(c>>12));bytes.push(0x80|((c>>6)&63));bytes.push(0x80|(c&63));}
+  }
+
+  // Version selection (1-10 byte capacity table for EC level M)
+  const CAP=[0,16,28,44,64,86,108,124,154,182,216];
+  let ver=1;
+  while(ver<=10&&CAP[ver]<bytes.length)ver++;
+  if(ver>10){ver=10;} // clamp — text is our short PROPOSALTRACK:N format so ver 1-2 always
+
+  // QR parameters for byte mode, EC level M
+  const EC_CODEWORDS={1:10,2:16,3:26,4:18,5:24,6:16,7:18,8:22,9:22,10:26};
+  const TOTAL_CW={1:19,2:34,3:55,4:80,5:108,6:136,7:156,8:194,9:232,10:274};
+  const ecCount=EC_CODEWORDS[ver];
+  const totalCW=TOTAL_CW[ver];
+  const dataCW=totalCW-ecCount;
+
+  // Build bit stream
+  const bits=[];
+  const pushBits=(v,n)=>{for(let i=n-1;i>=0;i--)bits.push((v>>i)&1);};
+  pushBits(0b0100,4); // byte mode indicator
+  pushBits(bytes.length,8); // char count
+  for(const b of bytes)pushBits(b,8);
+  // Terminator
+  for(let i=0;i<4&&bits.length<dataCW*8;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  // Pad codewords
+  const pad=[0xEC,0x11];let pi=0;
+  while(bits.length<dataCW*8){pushBits(pad[pi%2],8);pi++;}
+
+  // Data codewords
+  const dataCodes=[];
+  for(let i=0;i<dataCW;i++){let v=0;for(let j=0;j<8;j++)v=(v<<1)|bits[i*8+j];dataCodes.push(v);}
+
+  // EC codewords
+  const gen=gfPoly(0,ecCount);
+  const ec=gfPolyDiv(dataCodes,gen);
+
+  // Final message
+  const msg=[...dataCodes,...ec];
+
+  // Build QR matrix
+  const size=ver*4+17;
+  const M=Array.from({length:size},()=>new Int8Array(size).fill(-1));
+  const set=(r,c,v)=>{if(r>=0&&r<size&&c>=0&&c<size)M[r][c]=v;};
+  const isSet=(r,c)=>r>=0&&r<size&&c>=0&&c<size&&M[r][c]!==-1;
+
+  // Finder patterns
+  function finder(row,col){
+    for(let r=0;r<7;r++)for(let c=0;c<7;c++){
+      const v=(r===0||r===6||c===0||c===6)?1:(r>=2&&r<=4&&c>=2&&c<=4)?1:0;
+      set(row+r,col+c,v);
+    }
+    // Separators
+    for(let i=-1;i<=7;i++){set(row-1,col+i,0);set(row+7,col+i,0);set(row+i,col-1,0);set(row+i,col+7,0);}
+  }
+  finder(0,0);finder(0,size-7);finder(size-7,0);
+
+  // Timing patterns
+  for(let i=8;i<size-8;i++){set(6,i,(i%2)?0:1);set(i,6,(i%2)?0:1);}
+
+  // Dark module
+  set(size-8,8,1);
+
+  // Alignment pattern (ver>=2)
+  if(ver>=2){
+    const AP={2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+    const pos=AP[ver]||[];
+    for(const r of pos)for(const c of pos){
+      if(isSet(r,c))continue;
+      for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++){
+        set(r+dr,c+dc,(dr===-2||dr===2||dc===-2||dc===2)?1:(dr===0&&dc===0)?1:0);
+      }
+    }
+  }
+
+  // Format info (mask 0, EC level M = 00, mask 000 → format 101010000010010)
+  const FORMAT_STR=[1,0,1,0,1,0,0,0,0,0,1,0,0,1,0]; // precomputed for M+mask0
+  function placeFormat(f){
+    // Horizontal near top-left finder
+    const hPos=[0,1,2,3,4,5,7,8,8,8,8,8,8,8,8];
+    const hRow=[8,8,8,8,8,8,8,8,7,5,4,3,2,1,0];
+    for(let i=0;i<15;i++)set(hRow[i],hPos[i],f[i]);
+    // Vertical near top-right finder
+    const vCol=Array(7).fill(size-1-0).map((_,i)=>size-1-i).concat([8,8,8,8,8,8,8,8]);
+    const vRow=[8,8,8,8,8,8,8,8,0,1,2,3,4,5,7];
+    // Simpler: just place standard positions
+    const fmt=f;
+    for(let i=0;i<6;i++){set(8,i,fmt[i]);set(i,8,fmt[14-i]);}
+    set(8,7,fmt[6]);set(7,8,fmt[8]);set(8,8,fmt[7]);
+    for(let i=9;i<15;i++){set(8,size-15+i,fmt[i]);set(size-15+i,8,fmt[14-(i-9+9)]);}
+    // Simpler vertical (top-right)
+    for(let i=0;i<7;i++)set(8,size-1-i,fmt[i]);
+    for(let i=7;i<15;i++)set(size-7+(i-7),8,fmt[i]);
+  }
+  placeFormat(FORMAT_STR);
+
+  // Place data bits (zigzag)
+  const dataBits=[];
+  for(const cw of msg)for(let i=7;i>=0;i--)dataBits.push((cw>>i)&1);
+
+  let bi=0;
+  for(let col=size-1;col>=1;col-=2){
+    if(col===6)col--;
+    for(let row=0;row<size;row++){
+      const r=(col%4<2)?row:size-1-row;
+      for(let dc=0;dc<2;dc++){
+        const c=col-dc;
+        if(M[r][c]===-1){
+          M[r][c]=bi<dataBits.length?dataBits[bi++]:0;
+        }
+      }
+    }
+  }
+
+  // Apply mask 0: (row+col)%2===0 → flip
+  for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+    if(M[r][c]!==0&&M[r][c]!==1)continue;
+    // Only mask data/ec modules (not function patterns)
+    // Simple approach: mask all non-fixed modules
+    if((r+c)%2===0)M[r][c]^=1;
+  }
+
+  return {matrix:M,size};
+}
+
+function qrToCanvas(text,scale=8){
+  let qr;
+  try{qr=makeQR(text);}catch(e){return null;}
+  const {matrix,size}=qr;
+  const canvas=document.createElement('canvas');
+  const quiet=4;
+  canvas.width=canvas.height=(size+quiet*2)*scale;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#1e3a5f';
+  for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+    if(matrix[r][c]===1)ctx.fillRect((c+quiet)*scale,(r+quiet)*scale,scale,scale);
+  }
+  return canvas;
+}
+
+function generateQRCode(containerId, text, proposalId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+
+  // Serve from cache
+  if (proposalId && qrCache[proposalId]) {
+    const img = document.createElement('img');
+    img.src = qrCache[proposalId];
+    img.style.cssText = 'width:200px;height:200px;border-radius:12px;display:block;margin:0 auto';
+    el.appendChild(img);
+    return;
+  }
+
+  const canvas = qrToCanvas(text, 6);
+  if (canvas) {
+    canvas.style.cssText = 'width:200px;height:200px;border-radius:12px;display:block;margin:0 auto';
+    el.appendChild(canvas);
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      if (proposalId) qrCache[proposalId] = dataUrl;
+    } catch(e) {}
+  } else {
+    el.innerHTML = `<div style="text-align:center;padding:16px;background:var(--faint);border-radius:12px">
+      <p style="font-size:.75rem;color:var(--muted)">Proposal ID: <strong>${proposalId||text}</strong></p>
+      <p style="font-size:.65rem;color:var(--muted);margin-top:4px">QR render failed — use ID above for manual scan</p>
+    </div>`;
+  }
+}
+
+// Convert dataURL to Blob reliably
+function dataUrlToBlob(dataUrl) {
+  const parts = dataUrl.split(',');
+  const mime = parts[0].match(/:(.*?);/)[1];
+  const binary = atob(parts[1]);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+async function downloadQR(proposalId) {
+  const proposal = DB.getArr('proposals').find(p => p.id === proposalId);
+  const filename = `QR-${proposal?.refNo || proposalId}.png`;
+  const dataUrl = qrCache[proposalId];
+
+  if (!dataUrl) { toast('QR not ready — try again in a moment'); return; }
+
+  const blob = dataUrlToBlob(dataUrl);
+
+  // ── Strategy 1: Web Share API with file (Android + iOS 15+)
+  // This opens the NATIVE share sheet — user can pick Files, WhatsApp, Drive, etc.
+  const file = new File([blob], filename, { type: 'image/png' });
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return; // user cancelled
+    }
+  }
+
+  // ── Strategy 2: Blob object URL + anchor click (works in most Android browsers)
+  try {
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(blobUrl); a.remove(); }, 2000);
+    toast('✅ QR image saved to Downloads');
+    return;
+  } catch(e) {}
+
+  // ── Strategy 3: Open image in new tab — user long-presses to save
+  try {
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+    toast('Long-press the image → Save to download');
+  } catch(e) {
+    toast('Could not save. Try screenshotting the QR code.');
+  }
+}
+
+async function shareQR(proposalId) {
+  const proposal = DB.getArr('proposals').find(p => p.id === proposalId);
+  const filename = `QR-${proposal?.refNo || proposalId}.png`;
+  const dataUrl = qrCache[proposalId];
+
+  if (!dataUrl) { toast('QR not ready — try again in a moment'); return; }
+
+  const blob = dataUrlToBlob(dataUrl);
+  const file = new File([blob], filename, { type: 'image/png' });
+
+  // ── Try sharing the image file via native share sheet
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: `QR — ${proposal.refNo}`,
+        text: `Proposal: ${proposal.subject} | Ref: ${proposal.refNo}`,
+      });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  // ── Try sharing as text only (older Android)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `Proposal QR — ${proposal.refNo}`,
+        text: `Proposal: ${proposal.subject}\nRef: ${proposal.refNo}`,
+      });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  // ── No share API: fall back to download
+  toast('Share not supported — saving QR to Downloads instead');
+  await downloadQR(proposalId);
+}
+
+// ══════════════════════════════════════════════════════════════
+// PROPOSAL DETAIL
+// ══════════════════════════════════════════════════════════════
+
+function openProposalDetail(proposalId) {
+  const proposal = DB.getArr('proposals').find(p => p.id === proposalId);
+  if (!proposal) return;
+
+  const cms = DB.getArr('committee_members').filter(cm => cm.proposalId === proposalId);
+  const isMaker = proposal.makerId === currentUser.id;
+  const myCM = cms.find(cm => cm.userId === currentUser.id);
+  const isMember = !!myCM;
+
+  if (!isMaker && !isMember) { toast('Access denied'); return; }
+
+  showScreen('proposal-detail');
+
+  document.getElementById('detail-refno').textContent = proposal.refNo;
+  document.getElementById('detail-subject').textContent = proposal.subject;
+  document.getElementById('detail-badge').innerHTML = `<span class="badge ${statusBadgeClass(proposal.currentStatus)}">${proposal.currentStatus==='Pending for Approval'?'Pending':proposal.currentStatus}</span>`;
+
+  renderDetailBody(proposal, cms, isMaker, myCM);
+
+  // Generate QR after render
+  setTimeout(() => {
+    if (document.getElementById('qr-display')) {
+      generateQRCode('qr-display', proposal.qrData, proposal.id);
+    }
+  }, 100);
+}
+
+function renderDetailBody(proposal, cms, isMaker, myCM) {
+  const maker = getUserById(proposal.makerId);
+  const currentHolder = proposal.currentWithId ? getUserById(proposal.currentWithId) : null;
+  const logs = DB.getArr('audit_logs').filter(l => l.proposalId === proposal.id).sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+  const canAct = myCM && !myCM.hasActed && (proposal.currentStatus === 'Draft' || proposal.currentStatus === 'Pending for Approval');
+  const isChairman = myCM?.committeeRole === 'Chairman';
+
+  const body = document.getElementById('detail-body');
+  body.innerHTML = `
+
+    <!-- Status Card -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <p class="section-label" style="margin-bottom:4px">Current Status</p>
+          <p class="font-bold" style="font-size:1rem">${proposal.currentStatus}</p>
+        </div>
+        ${currentHolder ? `<div class="text-right">
+          <p class="section-label" style="margin-bottom:4px">Currently With</p>
+          <p class="font-semibold text-sm">${currentHolder.name}</p>
+          <p style="font-size:.7rem;color:var(--brand2)">${getDesignation(currentHolder.designationId).title}</p>
+        </div>` : ''}
+      </div>
+      <div class="divider"></div>
+      <div class="flex items-center justify-between">
+        <div><span class="text-xs text-muted">Maker: </span><span class="text-xs font-semibold">${maker?.name}</span></div>
+        <div><span class="text-xs text-muted">Date: </span><span class="text-xs font-semibold">${fmtDate(proposal.dateOfProposal)}</span></div>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-3" onclick="toggleSection('qr-section',this)" style="cursor:pointer">
+        <div class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand2)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span class="font-bold text-sm">QR Code</span>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" id="qr-chevron"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+      <div id="qr-section">
+        <div class="qr-wrap"><div id="qr-display"></div></div>
+        <p class="text-xs text-muted text-center mb-3" style="font-size:.7rem">Proposal Ref: <strong>${proposal.refNo}</strong></p>
+        <div class="grid-2">
+          <button class="btn btn-secondary btn-sm" onclick="downloadQR(${proposal.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="shareQR(${proposal.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Committee -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-2" onclick="toggleSection('committee-section',this)" style="cursor:pointer">
+        <span class="font-bold text-sm">Committee</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+      <div id="committee-section">
+        <!-- Maker -->
+        <div class="flex items-center gap-2 member-row">
+          ${avatarEl(maker?.name||'?')}
+          <div class="flex-1">
+            <p class="text-sm font-semibold">${maker?.name}</p>
+            <p class="text-xs text-muted">${getDesignation(maker?.designationId||0).title}</p>
+          </div>
+          <span class="badge badge-maker">Maker</span>
+        </div>
+        ${cms.map(cm => {
+          const u = getUserById(cm.userId);
+          if (!u) return '';
+          return `<div class="flex items-center gap-2 member-row">
+            ${avatarEl(u.name)}
+            <div class="flex-1">
+              <p class="text-sm font-semibold">${u.name}</p>
+              <p class="text-xs text-muted">${getDesignation(u.designationId).title}</p>
+            </div>
+            <div style="text-align:right">
+              <span class="badge ${roleBadgeClass(cm.committeeRole)}">${cm.committeeRole}</span>
+              ${cm.hasActed && cm.action ? `<br><span class="badge ${cm.action==='Approved'||cm.action==='Sanctioned'?'badge-approved':cm.action==='Rejected'?'badge-rejected':'badge-sendback'} mt-1">${cm.action}</span>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Action Panel -->
+    ${canAct ? `
+    <div class="action-panel" id="action-panel">
+      <p class="text-xs font-semibold" style="color:var(--warn);margin-bottom:8px">⏳ Action Required — You are ${myCM.committeeRole}</p>
+      <div id="action-error" class="alert alert-error" style="display:none"></div>
+      <div id="action-simple">
+        <div class="grid-2">
+          <button class="btn btn-secondary btn-sm" onclick="performAction(${proposal.id},'AcknowledgeReceipt')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+            Acknowledge
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="showActionForm(${isChairman})">Take Action →</button>
+        </div>
+      </div>
+      <div id="action-form" style="display:none">
+        <textarea id="action-comment" class="input mb-3" style="height:80px;resize:none" placeholder="Optional comment..."></textarea>
+        <div class="grid-2">
+          ${!isChairman ? `
+            <button class="btn btn-success btn-sm" onclick="performAction(${proposal.id},'Approve')">✓ Approve</button>
+            <button class="btn btn-secondary btn-sm" onclick="performAction(${proposal.id},'SendBack')">↩ Send Back</button>
+          ` : `
+            <button class="btn btn-success btn-sm" onclick="performAction(${proposal.id},'Sanction')">✓ Sanction</button>
+            <button class="btn btn-danger btn-sm" onclick="performAction(${proposal.id},'Reject')">✗ Reject</button>
+            <button class="btn btn-secondary btn-sm" style="grid-column:span 2" onclick="performAction(${proposal.id},'SendBack')">↩ Send Back to Maker</button>
+          `}
+        </div>
+        <button onclick="document.getElementById('action-simple').style.display='grid';document.getElementById('action-form').style.display='none'" class="w-full text-center text-xs text-muted mt-2" style="background:none;border:none;cursor:pointer;padding:6px">Cancel</button>
+      </div>
+    </div>` : ''}
+
+    <!-- Timeline -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-3" onclick="toggleSection('timeline-section',this)" style="cursor:pointer">
+        <div class="flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand2)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span class="font-bold text-sm">Audit Trail</span>
+          <span class="badge badge-draft" style="font-size:.65rem">${logs.length}</span>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+      <div id="timeline-section">
+        ${logs.length === 0 ? '<p class="text-xs text-muted text-center py-4">No events yet</p>' :
+          logs.map((log, idx) => {
+            const u = getUserById(log.userId);
+            const role = proposal.makerId === log.userId ? 'Maker' :
+              (cms.find(cm => cm.userId === log.userId)?.committeeRole || 'System');
+            const isLast = idx === logs.length - 1;
+            const actionColors = {
+              'Created':'#dbeafe,#1e40af','Received':'#dbeafe,#1e40af',
+              'Approved':'#dcfce7,#166534','Sanctioned':'#dcfce7,#166534',
+              'Forwarded to Chairman':'#ede9fe,#5b21b6',
+              'Rejected':'#fee2e2,#991b1b','Sent Back':'#fef3c7,#92400e',
+            };
+            const [bgc,fgc] = (actionColors[log.action]||'#f1f5f9,#475569').split(',');
+            const icons = {
+              Created:'📝', Received:'📥', Approved:'✅', Sanctioned:'🏆',
+              Rejected:'❌', 'Sent Back':'↩', 'Forwarded to Chairman':'🔄',
+            };
+            return `<div class="timeline-item ${!isLast?'timeline-line':''}">
+              <div class="timeline-icon" style="background:${bgc};color:${fgc}">${icons[log.action]||'•'}</div>
+              <div class="timeline-content">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <p class="timeline-action">${log.action}</p>
+                    <p class="timeline-meta">${u?.name||'?'} · <span style="color:var(--brand2)">${role}</span></p>
+                    <p style="font-size:.65rem;color:var(--muted)">${u?getDesignation(u.designationId).title:''}</p>
+                    ${log.comment ? `<div class="timeline-comment">"${log.comment}"</div>` : ''}
+                  </div>
+                  <p class="timeline-time">${fmtDateTime(log.timestamp)}</p>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+      </div>
+    </div>
+  `;
+
+  // QR after DOM insert
+  setTimeout(() => {
+    if (document.getElementById('qr-display')) {
+      generateQRCode('qr-display', proposal.qrData, proposal.id);
+    }
+  }, 150);
+}
+
+function toggleSection(sectionId, btn) {
+  const el = document.getElementById(sectionId);
+  if (!el) return;
+  const chevron = btn.querySelector('svg:last-child');
+  if (el.style.display === 'none') {
+    el.style.display = '';
+    if (chevron) chevron.querySelector('path').setAttribute('d','M18 15l-6-6-6 6');
+  } else {
+    el.style.display = 'none';
+    if (chevron) chevron.querySelector('path').setAttribute('d','M6 9l6 6 6-6');
+  }
+}
+
+function showActionForm(isChairman) {
+  document.getElementById('action-simple').style.display = 'none';
+  document.getElementById('action-form').style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════════
+// STATE MACHINE — ACTIONS
+// ══════════════════════════════════════════════════════════════
+
+function performAction(proposalId, action) {
+  const proposals = DB.getArr('proposals');
+  const proposal = proposals.find(p => p.id === proposalId);
+  if (!proposal) return;
+
+  const cms = DB.getArr('committee_members');
+  const myCM = cms.find(cm => cm.proposalId === proposalId && cm.userId === currentUser.id);
+
+  const comment = document.getElementById('action-comment')?.value?.trim() || '';
+  const now = new Date().toISOString();
+
+  if (action === 'AcknowledgeReceipt') {
+    proposal.currentStatus = 'Pending for Approval';
+    proposal.currentWithId = currentUser.id;
+    proposal.updatedAt = now;
+    DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Received', comment);
+    toast('✅ Receipt acknowledged');
+
+  } else if (action === 'Approve') {
+    if (!myCM || myCM.committeeRole === 'Chairman') return;
+    myCM.hasActed = true; myCM.action = 'Approved'; myCM.actedAt = now;
+    DB.set('committee_members', cms);
+    addAuditLog(proposalId, currentUser.id, 'Approved', comment);
+
+    // Check if all non-chairman approved
+    const nonChairmen = cms.filter(cm => cm.proposalId === proposalId && cm.committeeRole !== 'Chairman');
+    const allApproved = nonChairmen.every(cm => cm.hasActed && cm.action === 'Approved');
+    if (allApproved) {
+      const chairman = cms.find(cm => cm.proposalId === proposalId && cm.committeeRole === 'Chairman');
+      if (chairman) {
+        proposal.currentWithId = chairman.userId;
+        addAuditLog(proposalId, currentUser.id, 'Forwarded to Chairman', 'All members approved.');
+      }
+    }
+    proposal.updatedAt = now;
+    DB.set('proposals', proposals);
+    toast('✅ Approved');
+
+  } else if (action === 'Sanction') {
+    if (!myCM || myCM.committeeRole !== 'Chairman') return;
+    myCM.hasActed = true; myCM.action = 'Sanctioned'; myCM.actedAt = now;
+    proposal.currentStatus = 'Sanctioned'; proposal.currentWithId = null; proposal.updatedAt = now;
+    DB.set('committee_members', cms);
+    DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Sanctioned', comment);
+    toast('🏆 Proposal Sanctioned!');
+
+  } else if (action === 'Reject') {
+    if (!myCM || myCM.committeeRole !== 'Chairman') return;
+    myCM.hasActed = true; myCM.action = 'Rejected'; myCM.actedAt = now;
+    proposal.currentStatus = 'Rejected'; proposal.currentWithId = null; proposal.updatedAt = now;
+    DB.set('committee_members', cms);
+    DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Rejected', comment);
+    toast('❌ Proposal Rejected');
+
+  } else if (action === 'SendBack') {
+    if (!myCM) return;
+    myCM.hasActed = true; myCM.action = 'SendBack'; myCM.actedAt = now;
+    proposal.currentStatus = 'Draft'; proposal.currentWithId = proposal.makerId; proposal.updatedAt = now;
+    DB.set('committee_members', cms);
+    DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Sent Back', comment);
+    toast('↩ Sent back to Maker');
+  }
+
+  // Re-render detail
+  const updatedProposal = DB.getArr('proposals').find(p => p.id === proposalId);
+  const updatedCms = DB.getArr('committee_members').filter(cm => cm.proposalId === proposalId);
+  const isMaker = updatedProposal.makerId === currentUser.id;
+  const updatedMyCM = updatedCms.find(cm => cm.userId === currentUser.id);
+  renderDetailBody(updatedProposal, updatedCms, isMaker, updatedMyCM);
+}
+
+function addAuditLog(proposalId, userId, action, comment='') {
+  const logs = DB.getArr('audit_logs');
+  logs.push({id: nextId('log'), proposalId, userId, action, comment: comment||null, timestamp: new Date().toISOString()});
+  DB.set('audit_logs', logs);
+}
+
+// ══════════════════════════════════════════════════════════════
+// QR SCANNER
+// ══════════════════════════════════════════════════════════════
+
+// ── Native QR Scanner (no external library required)
+// Uses BarcodeDetector API (Android Chrome 83+, iOS 17+) with getUserMedia
+// Falls back to manual ID entry for older devices
+
+let scanStream = null;
+let scanAnimFrame = null;
+let barcodeDetector = null;
+
+async function startQRScanner() {
+  const startView = document.getElementById('scan-start-view');
+  const activeView = document.getElementById('scan-active-view');
+  const errEl = document.getElementById('scan-error');
+  const statusEl = document.getElementById('scan-status');
+  errEl.style.display = 'none';
+
+  // Check BarcodeDetector support
+  if (!('BarcodeDetector' in window)) {
+    errEl.innerHTML = 'Your browser does not support the native QR scanner.<br><br>Use the <b>manual entry</b> below, or open this file in <b>Chrome</b> on Android or <b>Safari</b> on iOS 17+.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Request camera
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 1280 } }
+    });
+  } catch(e) {
+    const msg = e.name === 'NotAllowedError'
+      ? 'Camera permission denied. Tap the camera icon in your browser address bar to allow access, then try again.'
+      : 'Could not access camera: ' + e.message;
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Init BarcodeDetector
+  try {
+    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+  } catch(e) {
+    errEl.textContent = 'QR detection failed to initialise: ' + e.message;
+    errEl.style.display = 'block';
+    if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+    return;
+  }
+
+  // Show camera
+  startView.style.display = 'none';
+  activeView.style.display = 'block';
+
+  const video = document.getElementById('scan-video');
+  video.srcObject = scanStream;
+  await video.play().catch(() => {});
+
+  // Scan loop
+  const canvas = document.getElementById('scan-canvas');
+  const ctx = canvas.getContext('2d');
+  let scanning = true;
+
+  async function scanFrame() {
+    if (!scanning || video.readyState < 2) {
+      if (scanning) scanAnimFrame = requestAnimationFrame(scanFrame);
+      return;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    try {
+      const codes = await barcodeDetector.detect(canvas);
+      if (codes.length > 0) {
+        scanning = false;
+        if (statusEl) statusEl.textContent = '✅ QR detected!';
+        stopScanner();
+        handleScannedQR(codes[0].rawValue);
+        return;
+      }
+    } catch(e) {}
+
+    if (scanning) scanAnimFrame = requestAnimationFrame(scanFrame);
+  }
+
+  scanAnimFrame = requestAnimationFrame(scanFrame);
+}
+
+function stopScanner() {
+  if (scanAnimFrame) { cancelAnimationFrame(scanAnimFrame); scanAnimFrame = null; }
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  const video = document.getElementById('scan-video');
+  if (video) { video.srcObject = null; }
+  barcodeDetector = null;
+  document.getElementById('scan-start-view').style.display = 'block';
+  document.getElementById('scan-active-view').style.display = 'none';
+}
+
+function stopScannerAndGo(screen) {
+  stopScanner();
+  showScreen(screen);
+}
+
+function manualScan() {
+  const val = document.getElementById('manual-scan-id').value.trim();
+  if (!val || isNaN(parseInt(val))) { toast('Enter a valid Proposal ID'); return; }
+  openScanAction(parseInt(val));
+}
+
+function handleScannedQR(text) {
+  let proposalId = null;
+
+  // Format 1: PROPOSALTRACK:<id>
+  const ptMatch = text.match(/^PROPOSALTRACK:(\d+)$/);
+  if (ptMatch) proposalId = parseInt(ptMatch[1]);
+
+  // Format 2: URL containing /scan/<id>
+  if (!proposalId) {
+    const urlMatch = text.match(/\/scan\/(\d+)/);
+    if (urlMatch) proposalId = parseInt(urlMatch[1]);
+  }
+
+  if (!proposalId) {
+    document.getElementById('scan-error').textContent = 'Invalid QR code — not a ProposalTrack code.';
+    document.getElementById('scan-error').style.display = 'block';
+    document.getElementById('scan-start-view').style.display = 'block';
+    document.getElementById('scan-active-view').style.display = 'none';
+    return;
+  }
+
+  openScanAction(proposalId);
+}
+
+function openScanAction(proposalId) {
+  const proposal = DB.getArr('proposals').find(p => p.id === proposalId);
+  if (!proposal) { toast('Proposal not found'); return; }
+
+  const cms = DB.getArr('committee_members').filter(cm => cm.proposalId === proposalId);
+  const isMaker = proposal.makerId === currentUser.id;
+  const myCM = cms.find(cm => cm.userId === currentUser.id);
+
+  if (!isMaker && !myCM) {
+    // Show screen but with access denied
+    showScanActionScreen(proposal, null, null, true);
+    return;
+  }
+
+  showScanActionScreen(proposal, myCM, isMaker, false);
+}
+
+function showScanActionScreen(proposal, myCM, isMaker, forbidden) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-scan-action').classList.add('active');
+  document.getElementById('scan-action-refno').textContent = proposal.refNo;
+
+  const body = document.getElementById('scan-action-body');
+  const holder = proposal.currentWithId ? getUserById(proposal.currentWithId) : null;
+  const cms = DB.getArr('committee_members').filter(cm => cm.proposalId === proposal.id);
+
+  if (forbidden) {
+    body.innerHTML = `<div style="text-align:center;padding:40px 20px">
+      <div style="width:64px;height:64px;background:#fee2e2;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <h2 style="margin-bottom:8px">Access Denied</h2>
+      <p class="text-muted text-sm">You are not assigned to this proposal.</p>
+      <button onclick="showScreen('dashboard')" class="btn btn-primary mt-4" style="max-width:200px;margin:16px auto 0">Back to Dashboard</button>
+    </div>`;
+    return;
+  }
+
+  const canAct = myCM && !myCM.hasActed && (proposal.currentStatus === 'Draft' || proposal.currentStatus === 'Pending for Approval');
+  const isChairman = myCM?.committeeRole === 'Chairman';
+  const myRole = isMaker ? 'Maker' : myCM?.committeeRole || 'Viewer';
+
+  body.innerHTML = `
+    <div class="card mb-3">
+      <p class="text-xs text-muted mb-1">${proposal.subject}</p>
+      <div class="flex items-center justify-between mt-2">
+        <div><p class="section-label" style="margin-bottom:2px">Status</p>
+          <span class="badge ${statusBadgeClass(proposal.currentStatus)}">${proposal.currentStatus==='Pending for Approval'?'Pending':proposal.currentStatus}</span>
+        </div>
+        ${holder ? `<div class="text-right">
+          <p class="section-label" style="margin-bottom:2px">Currently With</p>
+          <p class="font-semibold text-sm">${holder.name}</p>
+          <p style="font-size:.7rem;color:var(--brand2)">${getDesignation(holder.designationId).title}</p>
+        </div>` : ''}
+      </div>
+      <div class="divider"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-muted">Your role:</span>
+        <span class="badge ${roleBadgeClass(myRole)}">${myRole}</span>
+      </div>
+    </div>
+
+    ${canAct ? `
+    <div class="action-panel">
+      <h3 class="mb-1">Take Action</h3>
+      <p class="text-xs text-muted mb-3">As ${myCM.committeeRole}, select your action:</p>
+      <textarea id="scan-comment" class="input mb-3" style="height:70px;resize:none" placeholder="Optional comment..."></textarea>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-secondary" onclick="scanAction(${proposal.id},'AcknowledgeReceipt')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          Acknowledge Receipt
+        </button>
+        ${!isChairman ? `
+          <button class="btn btn-success" onclick="scanAction(${proposal.id},'Approve')">✓ Approve</button>
+          <button class="btn btn-secondary" onclick="scanAction(${proposal.id},'SendBack')">↩ Send Back to Maker</button>
+        ` : `
+          <button class="btn btn-success" onclick="scanAction(${proposal.id},'Sanction')">🏆 Sanction (Final Approval)</button>
+          <button class="btn btn-danger" onclick="scanAction(${proposal.id},'Reject')">✗ Reject</button>
+          <button class="btn btn-secondary" onclick="scanAction(${proposal.id},'SendBack')">↩ Send Back to Maker</button>
+        `}
+      </div>
+    </div>` : `
+    <div class="card text-center" style="padding:20px">
+      <p class="text-sm text-muted">
+        ${myCM?.hasActed ? '✅ You have already acted on this proposal.' :
+          isMaker ? '👁 You are the Maker. Monitor progress from the dashboard.' :
+          'No action required from you at this time.'}
+      </p>
+    </div>`}
+
+    <button onclick="openProposalDetail(${proposal.id})" class="btn btn-secondary mt-2">
+      View Full Details & Timeline →
+    </button>
+  `;
+}
+
+function scanAction(proposalId, action) {
+  const comment = document.getElementById('scan-comment')?.value?.trim() || '';
+  // Temporarily set action-comment for shared function
+  performActionDirect(proposalId, action, comment);
+}
+
+function performActionDirect(proposalId, action, comment) {
+  const proposals = DB.getArr('proposals');
+  const proposal = proposals.find(p => p.id === proposalId);
+  if (!proposal) return;
+
+  const cms = DB.getArr('committee_members');
+  const myCM = cms.find(cm => cm.proposalId === proposalId && cm.userId === currentUser.id);
+  const now = new Date().toISOString();
+
+  if (action === 'AcknowledgeReceipt') {
+    proposal.currentStatus = 'Pending for Approval';
+    proposal.currentWithId = currentUser.id;
+    proposal.updatedAt = now;
+    DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Received', comment);
+  } else if (action === 'Approve') {
+    myCM.hasActed = true; myCM.action = 'Approved'; myCM.actedAt = now;
+    DB.set('committee_members', cms);
+    addAuditLog(proposalId, currentUser.id, 'Approved', comment);
+    const nonChairmen = cms.filter(cm => cm.proposalId === proposalId && cm.committeeRole !== 'Chairman');
+    const allApproved = nonChairmen.every(cm => cm.hasActed && cm.action === 'Approved');
+    if (allApproved) {
+      const chairman = cms.find(cm => cm.proposalId === proposalId && cm.committeeRole === 'Chairman');
+      if (chairman) { proposal.currentWithId = chairman.userId; addAuditLog(proposalId, currentUser.id, 'Forwarded to Chairman', ''); }
+    }
+    proposal.updatedAt = now;
+    DB.set('proposals', proposals);
+  } else if (action === 'Sanction') {
+    myCM.hasActed = true; myCM.action = 'Sanctioned'; myCM.actedAt = now;
+    proposal.currentStatus = 'Sanctioned'; proposal.currentWithId = null; proposal.updatedAt = now;
+    DB.set('committee_members', cms); DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Sanctioned', comment);
+  } else if (action === 'Reject') {
+    myCM.hasActed = true; myCM.action = 'Rejected'; myCM.actedAt = now;
+    proposal.currentStatus = 'Rejected'; proposal.currentWithId = null; proposal.updatedAt = now;
+    DB.set('committee_members', cms); DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Rejected', comment);
+  } else if (action === 'SendBack') {
+    if (myCM) { myCM.hasActed = true; myCM.action = 'SendBack'; myCM.actedAt = now; DB.set('committee_members', cms); }
+    proposal.currentStatus = 'Draft'; proposal.currentWithId = proposal.makerId; proposal.updatedAt = now;
+    DB.set('proposals', proposals);
+    addAuditLog(proposalId, currentUser.id, 'Sent Back', comment);
+  }
+
+  // Show success screen
+  const updatedProposal = DB.getArr('proposals').find(p => p.id === proposalId);
+  document.getElementById('scan-action-body').innerHTML = `
+    <div style="text-align:center;padding:40px 20px">
+      <div style="width:80px;height:80px;background:#dcfce7;border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:2rem">✅</div>
+      <h2 style="margin-bottom:6px">Action Recorded</h2>
+      <p class="text-muted text-sm">New status: <strong>${updatedProposal.currentStatus}</strong></p>
+      <div class="grid-2 mt-4">
+        <button onclick="openProposalDetail(${proposalId})" class="btn btn-secondary text-sm">View Details</button>
+        <button onclick="showScreen('dashboard')" class="btn btn-primary text-sm">Dashboard</button>
+      </div>
+    </div>`;
+  toast('Action recorded successfully');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════════
+
+function renderSettings() {
+  if (!currentUser) return;
+  const desig = getDesignation(currentUser.designationId).title;
+  document.getElementById('settings-avatar').textContent = currentUser.name[0];
+  document.getElementById('settings-name').textContent = currentUser.name;
+  document.getElementById('settings-empid').textContent = currentUser.empId;
+  document.getElementById('settings-desig').textContent = desig;
+  document.getElementById('settings-admin-link').style.display = currentUser.isAdmin ? 'block' : 'none';
+  document.getElementById('settings-info').innerHTML = [
+    {label:'Employee ID', val: currentUser.empId},
+    {label:'Full Name', val: currentUser.name},
+    {label:'Designation', val: desig},
+    {label:'Role', val: currentUser.isAdmin ? 'Administrator' : 'User'},
+  ].map(r => `<div class="flex items-center justify-between" style="padding:8px 0;border-bottom:1px solid var(--faint)">
+    <span class="text-sm text-muted">${r.label}</span>
+    <span class="text-sm font-semibold">${r.val}</span>
+  </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════════════════
+
+let adminTab = 'users';
+
+function setAdminTab(tab, btn) {
+  adminTab = tab;
+  document.querySelectorAll('#screen-admin .tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAdmin(tab);
+}
+
+function renderAdmin(tab) {
+  if (!currentUser?.isAdmin) return;
+  const body = document.getElementById('admin-body');
+  adminTab = tab;
+
+  if (tab === 'designations') {
+    const desigs = DB.getArr('designations');
+    body.innerHTML = `
+      <div class="card mb-3">
+        <p class="section-label">Add Designation</p>
+        <div class="flex gap-2">
+          <input id="new-desig-input" class="input flex-1" placeholder="e.g. AGM-Risk" onkeydown="if(event.key==='Enter')addDesignation()"/>
+          <button onclick="addDesignation()" class="btn btn-primary btn-sm" style="width:auto;padding:12px 16px">+</button>
+        </div>
+      </div>
+      <div class="card">
+        <p class="section-label">All Designations (${desigs.length})</p>
+        ${desigs.sort((a,b)=>a.title.localeCompare(b.title)).map(d => `
+          <div class="flex items-center justify-between" style="padding:10px 0;border-bottom:1px solid var(--faint)">
+            <span class="text-sm">${d.title}</span>
+            <button onclick="deleteDesignation(${d.id})" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            </button>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    const users = DB.getArr('users');
+    body.innerHTML = `<div class="card">
+      <p class="section-label">All Users (${users.length})</p>
+      ${users.map(u => {
+        const desig = getDesignation(u.designationId).title;
+        const isSelf = u.id === currentUser.id;
+        return `<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div>
+              <p class="font-bold text-sm">${u.name}</p>
+              <p class="text-xs text-muted">${u.empId} · ${desig}</p>
+            </div>
+            <div style="text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+              <span class="badge ${u.isActive?'badge-active':'badge-inactive'}">${u.isActive?'Active':'Inactive'}</span>
+              ${u.isAdmin?'<span class="badge badge-admin">Admin</span>':''}
+            </div>
+          </div>
+          ${!isSelf ? `<div class="grid-2">
+            <button onclick="toggleUserActive(${u.id},${!u.isActive})" class="btn btn-sm ${u.isActive?'btn-danger':'btn-success'}" style="font-size:.75rem">
+              ${u.isActive?'Deactivate':'Activate'}
+            </button>
+            <button onclick="toggleUserAdmin(${u.id},${!u.isAdmin})" class="btn btn-sm btn-secondary" style="font-size:.75rem">
+              ${u.isAdmin?'Remove Admin':'Make Admin'}
+            </button>
+          </div>` : `<p class="text-xs text-muted text-center">(current user)</p>`}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+}
+
+function addDesignation() {
+  const input = document.getElementById('new-desig-input');
+  const title = input?.value.trim();
+  if (!title) return;
+
+  const desigs = DB.getArr('designations');
+  if (desigs.find(d => d.title.toLowerCase() === title.toLowerCase())) { toast('Already exists'); return; }
+
+  desigs.push({id: nextId('desig'), title});
+  DB.set('designations', desigs);
+  if (input) input.value = '';
+  renderAdmin('designations');
+  fillDesignationDropdowns();
+  toast('Designation added');
+}
+
+function deleteDesignation(id) {
+  if (!confirm('Delete this designation?')) return;
+  const desigs = DB.getArr('designations').filter(d => d.id !== id);
+  DB.set('designations', desigs);
+  renderAdmin('designations');
+  toast('Deleted');
+}
+
+function toggleUserActive(id, newVal) {
+  const users = DB.getArr('users');
+  const u = users.find(u => u.id === id);
+  if (u) { u.isActive = newVal; DB.set('users', users); }
+  renderAdmin(adminTab);
+  toast(newVal ? 'User activated' : 'User deactivated');
+}
+
+function toggleUserAdmin(id, newVal) {
+  const users = DB.getArr('users');
+  const u = users.find(u => u.id === id);
+  if (u) { u.isAdmin = newVal; DB.set('users', users); }
+  renderAdmin(adminTab);
+  toast(newVal ? 'Admin access granted' : 'Admin access removed');
+}
+
+// ══════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════
+
+seedDB();
+fillDesignationDropdowns();
+
+if (restoreSession()) {
+  document.getElementById('bottom-nav').style.display = 'flex';
+  showScreen('dashboard');
+} else {
+  showScreen('login');
+}
+</script>
+
+<script>
+// PWA install support
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner if not already installed
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'flex';
+});
+
+// Register service worker for offline use
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Inline service worker via blob
+    const swCode = `
+      const CACHE = 'pt-v1';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+        self.skipWaiting();
+      });
+      self.addEventListener('activate', e => {
+        e.waitUntil(caches.keys().then(keys =>
+          Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+        ));
+        self.clients.claim();
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(
+          caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+        );
+      });
+    `;
+    const blob = new Blob([swCode], {type:'application/javascript'});
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  });
+}
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.style.display = 'none';
+  }
+}
+</script>
+
+</body>
+</html>
